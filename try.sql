@@ -1,0 +1,60 @@
+CREATE TABLE Users (
+    UserID SERIAL PRIMARY KEY,
+    Username VARCHAR(50) UNIQUE NOT NULL,
+    Email VARCHAR(100) UNIQUE NOT NULL,
+    Password VARCHAR(255) NOT NULL,
+    Name VARCHAR(100),
+    Role VARCHAR(20) DEFAULT 'User',
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Blogs (
+    BlogID SERIAL PRIMARY KEY,
+    UserID INTEGER REFERENCES Users(UserID) ON DELETE CASCADE,
+    Title VARCHAR(255) NOT NULL,
+    Content TEXT NOT NULL,
+    Tags TEXT[],
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE BlogRatings (
+    RatingID SERIAL PRIMARY KEY,
+    UserID INTEGER REFERENCES Users(UserID) ON DELETE CASCADE,
+    BlogID INTEGER REFERENCES Blogs(BlogID) ON DELETE CASCADE,
+    RatingValue INTEGER CHECK (RatingValue >= 1 AND RatingValue <= 5) NOT NULL,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(UserID, BlogID)
+);
+
+CREATE TABLE Comments (
+    CommentID SERIAL PRIMARY KEY,
+    UserID INTEGER REFERENCES Users(UserID) ON DELETE CASCADE,
+    BlogID INTEGER REFERENCES Blogs(BlogID) ON DELETE CASCADE,
+    Content TEXT NOT NULL,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedat timestamp without time zone
+);
+
+CREATE TABLE Likes (
+    LikeID SERIAL PRIMARY KEY,
+    UserID INTEGER REFERENCES Users(UserID) ON DELETE CASCADE,
+    BlogID INTEGER REFERENCES Blogs(BlogID) ON DELETE CASCADE,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(UserID, BlogID)
+);
+
+CREATE TABLE Follows (
+    FollowID SERIAL PRIMARY KEY,
+    FollowerID INTEGER REFERENCES Users(UserID) ON DELETE CASCADE,
+    FollowingID INTEGER REFERENCES Users(UserID) ON DELETE CASCADE,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(FollowerID, FollowingID)
+);
+
+CREATE INDEX idx_blogs_userid ON Blogs(UserID);
+CREATE INDEX idx_blogs_tags ON Blogs USING gin(Tags);
+CREATE INDEX idx_comments_blogid ON Comments(BlogID);
+CREATE INDEX idx_search_users ON Users USING gin(to_tsvector('english', Username || ' ' || Name));
+CREATE INDEX idx_search_blogs ON Blogs USING gin(to_tsvector('english', Title || ' ' || Content));
